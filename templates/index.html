@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contextualizer Pro (Stable)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.birds.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        #vanta-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .glass-card { background: rgba(30, 30, 40, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; }
+        .nav-pills .nav-link { color: #ccc; }
+        .nav-pills .nav-link.active { background-color: rgba(13, 110, 253, 0.7); color: #fff; }
+        .form-control { background-color: rgba(0, 0, 0, 0.2) !important; border-color: rgba(255, 255, 255, 0.1) !important; }
+        .list-group-item { background-color: transparent; border-color: rgba(255, 255, 255, 0.1); }
+        .entity-badge { background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 400; }
+        [data-bs-theme="light"] #vanta-bg { display: none; }
+        [data-bs-theme="light"] body { background: #eef2f7; }
+        [data-bs-theme="light"] .glass-card { background: #ffffff; border-color: #dee2e6; }
+        [data-bs-theme="light"] .text-white, [data-bs-theme="light"] .text-white-50 { color: #212529 !important; }
+        [data-bs-theme="light"] .nav-pills .nav-link { color: #495057; }
+        [data-bs-theme="light"] .navbar-dark .navbar-brand, [data-bs-theme="light"] .navbar-dark .nav-link { color: rgba(0, 0, 0, 0.65) !important; }
+        .theme-switch { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent"><div class="container-fluid"><a class="navbar-brand fw-bold" href="#">Contextualizer Pro</a><ul class="navbar-nav ms-auto d-flex flex-row align-items-center"><li class="nav-item me-3"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutMeModal">About Creator</a></li><li class="nav-item me-3"><a class="nav-link theme-switch"><i class="bi bi-brightness-high-fill"></i></a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li></ul></div></nav>
+    <div class="container my-5"><div class="row justify-content-center"><div class="col-lg-9"><div class="text-center mb-5 animate__animated animate__fadeInDown"><h1 class="display-5 fw-bold text-white">Welcome, {{ current_user.username }}! ✨</h1><p class="lead text-white-50">Your AI-powered analysis suite.</p></div>
+    <div class="glass-card p-4 animate__animated animate__fadeInUp">
+        <form id="analyze-url-form">
+            <div class="input-group">
+                <input type="text" class="form-control form-control-lg" id="url-input" placeholder="Paste any article URL here..." required>
+                <button class="btn btn-primary btn-lg" type="submit" id="analyze-button">
+                    <span class="button-text">Analyze URL</span>
+                    <span class="spinner-border spinner-border-sm button-spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+    <div id="results-placeholder" class="mt-4"></div></div></div></div>
+    <div class="modal fade" id="aboutMeModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-card"><div class="modal-header border-0"><h1 class="modal-title fs-5 text-white">About the Creator</h1><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-white-50"><p>Shriansh Vikram Singh is a tech enthusiast pursuing a B.Tech in Computer Science from G.L. Bajaj Institute of Technology. With hands-on experience in frontend development, AI/ML through an IBM internship, and cybersecurity, he possesses strong analytical skills and a commitment to exploring emerging technologies like AI and blockchain.</p><div class="list-group list-group-flush"><a href="https://github.com/shriansh1625" target="_blank" class="list-group-item list-group-item-action bg-transparent text-white-50"><i class="bi bi-github me-2"></i> GitHub Profile</a><a href="https://www.linkedin.com/in/shriansh-vikram-singh-8a7938231" target="_blank" class="list-group-item list-group-item-action bg-transparent text-white-50"><i class="bi bi-linkedin me-2"></i> LinkedIn Profile</a><a href="https://drive.google.com/file/d/1gFCeeN8U4IMXfXzSzutkl9nKxa7cp8m9/view?usp=drivesdk" target="_blank" class="list-group-item list-group-item-action bg-transparent text-white-50"><i class="bi bi-file-earmark-person me-2"></i> View My Resume</a></div></div></div></div></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let vantaEffect = null;
+            const htmlElement = document.documentElement;
+            function setVanta(theme) {
+                const isDark = theme === 'dark';
+                if (isDark) {
+                    if (vantaEffect) vantaEffect.destroy();
+                    vantaEffect = VANTA.BIRDS({ el: "#vanta-bg", mouseControls: true, touchControls: true, gyroControls: false, minHeight: 200.00, minWidth: 200.00, scale: 1.00, scaleMobile: 1.00, backgroundColor: 0x1a1a2e, color1: 0x00a8ff, color2: 0x9d4edd, quantity: 3.00 });
+                } else {
+                    if (vantaEffect) vantaEffect.destroy();
+                    vantaEffect = null;
+                }
+            }
+            const themeSwitch = document.querySelector('.theme-switch');
+            function setTheme(theme) {
+                htmlElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('theme', theme);
+                setVanta(theme);
+            }
+            themeSwitch.addEventListener('click', () => setTheme(htmlElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark'));
+            setTheme(localStorage.getItem('theme') || 'dark');
+
+            const urlForm = document.getElementById('analyze-url-form');
+            const resultsPlaceholder = document.getElementById('results-placeholder');
+
+            urlForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const button = this.querySelector('button');
+                setLoading(button, true);
+                try {
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: new URLSearchParams({ 'url': document.getElementById('url-input').value })
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    pollForResults(data.status_url);
+                } catch (error) {
+                    displayError(`Failed to start analysis: ${error.message}`);
+                    setLoading(button, false);
+                }
+            });
+
+            function setLoading(button, isLoading) {
+                const buttonText = button.querySelector('.button-text');
+                const spinner = button.querySelector('.button-spinner');
+                button.disabled = isLoading;
+                if (isLoading) {
+                    if(buttonText) buttonText.style.display = 'none';
+                    if(spinner) spinner.style.display = 'inline-block';
+                    resultsPlaceholder.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-white-50 mt-2">Performing complex analysis... please wait.</p></div>`;
+                } else {
+                    if(buttonText) buttonText.style.display = 'inline-block';
+                    if(spinner) spinner.style.display = 'none';
+                }
+            }
+
+            async function pollForResults(statusUrl) {
+                try {
+                    const response = await fetch(statusUrl);
+                    const data = await response.json();
+                    if (data.state === 'SUCCESS') {
+                        displayUrlResults(data.result);
+                        setLoading(urlForm.querySelector('button'), false);
+                    } else if (data.state === 'FAILURE') {
+                        displayError('Analysis task failed in the background.');
+                        setLoading(urlForm.querySelector('button'), false);
+                    } else {
+                        setTimeout(() => pollForResults(statusUrl), 3000);
+                    }
+                } catch (error) {
+                    displayError('Could not retrieve analysis status.');
+                    setLoading(urlForm.querySelector('button'), false);
+                }
+            }
+
+            function displayError(message) { resultsPlaceholder.innerHTML = `<div class="alert alert-danger animate__animated animate__shakeX">${message}</div>`; }
+
+            function displayUrlResults(result) {
+                if (!result || result.error) return displayError(result ? result.error : 'Unknown error.');
+                const isEnglish = result.language === 'en';
+                const authors = result.authors && result.authors.length > 0 ? result.authors.join(', ') : 'Not found';
+                let sentimentHTML = `<div class="d-flex flex-column justify-content-center align-items-center h-100 text-center"><h5 class="text-white mb-3">Sentiment Analysis</h5><p class="text-white-50 small"><i class="bi bi-info-circle me-1"></i>This analysis is only available for English articles.</p></div>`;
+                if(isEnglish) sentimentHTML = `<h5 class="text-white text-center mb-3">Sentiment Analysis</h5><canvas id="sentimentChart"></canvas>`;
+                let entitiesHTML = `<p class="text-muted small">${result.named_entities ? result.named_entities.message : 'No specific entities found.'}</p>`;
+                if (isEnglish && result.named_entities && Object.keys(result.named_entities).length > 0) {
+                    entitiesHTML = '';
+                    for (const [label, items] of Object.entries(result.named_entities)) {
+                        const badges = items.map(item => `<span class="badge entity-badge me-1 mb-1">${item}</span>`).join('');
+                        entitiesHTML += `<dt class="col-sm-3 text-capitalize text-white-50">${label.toLowerCase()}</dt><dd class="col-sm-9">${badges}</dd>`;
+                    }
+                }
+                let crossRefHTML = '<p class="text-muted small">No other significant sources found.</p>';
+                if (result.cross_references && result.cross_references.references && result.cross_references.references.length > 0) {
+                    crossRefHTML = '<ul class="list-unstyled mb-0">';
+                    result.cross_references.references.forEach(ref => { crossRefHTML += `<li class="mb-2"><a href="${ref.link}" target="_blank" class="text-decoration-none text-info">${ref.title}</a><br><small class="text-muted">${ref.source}</small></li>`; });
+                    crossRefHTML += '</ul>';
+                }
+                const resultsHTML = `<div class="animate__animated animate__fadeInUp"><div class="row g-4"><div class="col-md-5"><div class="glass-card p-3 h-100">${sentimentHTML}</div></div><div class="col-md-7"><div class="glass-card p-3 h-100"><ul class="list-group list-group-flush"><li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-globe me-2"></i><strong>Source</strong></span><span class="text-end">${result.domain}<br><small>${result.source_check}</small></span></li><li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-person me-2"></i><strong>Author(s)</strong></span><span>${authors}</span></li><li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-clock me-2"></i><strong>Reading Time</strong></span><span class="badge bg-primary rounded-pill">${result.reading_time} min</span></li></ul></div></div></div><div class="glass-card p-4 mt-4"><h5 class="text-white mb-3"><i class="bi bi-robot me-2"></i>AI Deep Dive <small class="text-white-50">(via Gemini)</small></h5><p class="text-white-50" style="white-space: pre-wrap;">${result.gemini_analysis}</p></div><div class="glass-card p-4 mt-4"><h5 class="text-white mb-3"><i class="bi bi-tags me-2"></i>Named Entities</h5><dl class="row">${entitiesHTML}</dl></div><div class="glass-card p-4 mt-4"><h5 class="text-white mb-3"><i class="bi bi-search me-2"></i>Global Cross-Reference</h5>${crossRefHTML}</div></div>`;
+                resultsPlaceholder.innerHTML = resultsHTML;
+                if (isEnglish) {
+                    const chartTextColor = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'white' : 'black';
+                    new Chart(document.getElementById('sentimentChart').getContext('2d'), { type: 'radar', data: { labels: ['Polarity', 'Subjectivity', 'Neutrality'], datasets: [{ label: 'Sentiment', data: [(result.sentiment.polarity + 1) / 2, result.sentiment.subjectivity, 1 - result.sentiment.subjectivity], backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] }, options: { scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.2)' }, grid: { color: 'rgba(255, 255, 255, 0.2)' }, pointLabels: { color: chartTextColor, font: { size: 14 } }, ticks: { display: false, beginAtZero: true, max: 1 } } }, plugins: { legend: { display: false } } } });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<body>
+    <script>
+        function checkStatus(task_id) {
+            fetch(`/status/${task_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.state === 'SUCCESS') {
+                        // The API now gives us the final URL
+                        window.location.href = data.result_url;
+                    } else if (data.state === 'FAILURE') {
+                        alert("Analysis failed!");
+                        window.location.href = "/"; // Redirect home on failure
+                    } else {
+                        // If still pending, check again in 2 seconds
+                        setTimeout(() => checkStatus(task_id), 2000);
+                    }
+                });
+        }
+        window.onload = () => checkStatus("{{ task_id }}");
+    </script>
+</body>
+</html>
