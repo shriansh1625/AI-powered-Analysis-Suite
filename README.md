@@ -121,7 +121,7 @@ SERPAPI_KEY="your_serpapi_key"
 GEMINI_API_KEY="your_gemini_api_key"
 SECRET_KEY="generate_a_strong_random_string_here"
 
-Start Docker: Make sure you have Docker Desktop installed and running.
+Start Docker: Make sure you have Docker Desktop installed and presently running
 
 Run the Services (in 3 separate terminals):
 
